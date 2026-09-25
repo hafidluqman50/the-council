@@ -1,0 +1,27 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+
+  # The full test suite makes real on-chain calls against BSC Testnet with funded agent
+  # wallets and real Tavily/DeepSeek API calls — running it on every push would burn real
+  # credits and gas for no benefit. Typecheck is the CI gate; run `bun test` locally before
+  # merging anything that touches the debate/chain logic.

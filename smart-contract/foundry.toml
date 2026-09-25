@@ -16,10 +16,6 @@ remappings = [
 bsc_testnet = "${BSC_TESTNET_RPC_URL}"
 bsc = "${BSC_RPC_URL}"
 
-[etherscan]
-bsc_testnet = { key = "${BSCSCAN_API_KEY}", chain = 97 }
-bsc = { key = "${BSCSCAN_API_KEY}", chain = 56 }
-
 [fmt]
 line_length = 120
 tab_width = 4
