@@ -1,0 +1,3 @@
+ALTER TABLE post_references ALTER COLUMN label TYPE TEXT;
+ALTER TABLE risks ALTER COLUMN label TYPE TEXT;
+ALTER TABLE verdicts ALTER COLUMN status_text TYPE TEXT;

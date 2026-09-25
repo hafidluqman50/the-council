@@ -1,0 +1,123 @@
+export const councilThreadRegistryAbi = [
+  {
+    type: "function",
+    name: "openThread",
+    inputs: [
+      { name: "threadId", type: "bytes32", internalType: "bytes32" },
+      { name: "author", type: "address", internalType: "address" },
+      { name: "ideaHash", type: "bytes32", internalType: "bytes32" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "recordPost",
+    inputs: [
+      { name: "threadId", type: "bytes32", internalType: "bytes32" },
+      { name: "agentId", type: "uint256", internalType: "uint256" },
+      { name: "round", type: "uint8", internalType: "uint8" },
+      { name: "contentHash", type: "bytes32", internalType: "bytes32" },
+    ],
+    outputs: [{ name: "sequence", type: "uint16", internalType: "uint16" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "recordVerdict",
+    inputs: [
+      { name: "threadId", type: "bytes32", internalType: "bytes32" },
+      { name: "agentId", type: "uint256", internalType: "uint256" },
+      { name: "score", type: "uint8", internalType: "uint8" },
+      { name: "verdictHash", type: "bytes32", internalType: "bytes32" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "getThread",
+    inputs: [{ name: "threadId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        internalType: "struct CouncilThreadRegistry.Thread",
+        components: [
+          { name: "author", type: "address", internalType: "address" },
+          { name: "ideaHash", type: "bytes32", internalType: "bytes32" },
+          { name: "openedAt", type: "uint40", internalType: "uint40" },
+          { name: "opened", type: "bool", internalType: "bool" },
+          { name: "hasVerdict", type: "bool", internalType: "bool" },
+          {
+            name: "verdict",
+            type: "tuple",
+            internalType: "struct CouncilThreadRegistry.Verdict",
+            components: [
+              { name: "agentId", type: "uint256", internalType: "uint256" },
+              { name: "score", type: "uint8", internalType: "uint8" },
+              { name: "verdictHash", type: "bytes32", internalType: "bytes32" },
+              { name: "timestamp", type: "uint40", internalType: "uint40" },
+            ],
+          },
+          {
+            name: "posts",
+            type: "tuple[]",
+            internalType: "struct CouncilThreadRegistry.Post[]",
+            components: [
+              { name: "agentId", type: "uint256", internalType: "uint256" },
+              { name: "round", type: "uint8", internalType: "uint8" },
+              { name: "sequence", type: "uint16", internalType: "uint16" },
+              { name: "contentHash", type: "bytes32", internalType: "bytes32" },
+              { name: "timestamp", type: "uint40", internalType: "uint40" },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getPostCount",
+    inputs: [{ name: "threadId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "event",
+    name: "ThreadOpened",
+    inputs: [
+      { name: "threadId", type: "bytes32", indexed: true, internalType: "bytes32" },
+      { name: "author", type: "address", indexed: true, internalType: "address" },
+      { name: "ideaHash", type: "bytes32", indexed: false, internalType: "bytes32" },
+      { name: "timestamp", type: "uint256", indexed: false, internalType: "uint256" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "PostRecorded",
+    inputs: [
+      { name: "threadId", type: "bytes32", indexed: true, internalType: "bytes32" },
+      { name: "agentId", type: "uint256", indexed: false, internalType: "uint256" },
+      { name: "round", type: "uint8", indexed: false, internalType: "uint8" },
+      { name: "sequence", type: "uint16", indexed: false, internalType: "uint16" },
+      { name: "contentHash", type: "bytes32", indexed: false, internalType: "bytes32" },
+      { name: "timestamp", type: "uint256", indexed: false, internalType: "uint256" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "VerdictRecorded",
+    inputs: [
+      { name: "threadId", type: "bytes32", indexed: true, internalType: "bytes32" },
+      { name: "agentId", type: "uint256", indexed: false, internalType: "uint256" },
+      { name: "score", type: "uint8", indexed: false, internalType: "uint8" },
+      { name: "verdictHash", type: "bytes32", indexed: false, internalType: "bytes32" },
+      { name: "timestamp", type: "uint256", indexed: false, internalType: "uint256" },
+    ],
+    anonymous: false,
+  },
+] as const;
