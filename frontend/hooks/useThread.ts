@@ -51,6 +51,10 @@ export function useThreadQuery(publicRef: string, initialData?: ThreadDetail) {
     queryKey,
     queryFn: () => getThread(publicRef),
     initialData,
+    // WebSocket is the primary channel for live updates, but Fly's proxy can drop an idle
+    // connection with no reconnect logic here — polling is the fallback so the UI still
+    // catches up to a finished debate even if the socket silently died mid-thread.
+    refetchInterval: (query) => (query.state.data?.status === "live" ? 5000 : false),
   });
 
   const status = query.data?.status;
