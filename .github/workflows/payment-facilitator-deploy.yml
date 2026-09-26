@@ -1,0 +1,19 @@
+name: Payment Facilitator Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "payment-facilitator/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency: payment-facilitator-deploy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only --app the-council-facilitator
+        working-directory: payment-facilitator
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

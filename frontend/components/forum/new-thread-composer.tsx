@@ -41,8 +41,8 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
   const titlePreview = summarizeTitle(idea);
   const canSubmit = idea.trim().length > 0 && isConnected && !createThreadMutation.isPending;
   const priceLabel = requirements?.enabled
-    ? `5 agents · 2 rounds · ${formatAtomicAmount(requirements.priceAtomic)} USDT`
-    : "5 agents · 2 rounds";
+    ? `5 agents · ${formatAtomicAmount(requirements.priceAtomic)} USDT`
+    : "5 agents";
 
   function handleSubmit() {
     createThreadMutation.mutate(
