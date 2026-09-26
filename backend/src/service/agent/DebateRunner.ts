@@ -32,7 +32,7 @@ export class DebateRunner {
       const graph = buildCouncilGraph();
       const stream = await graph.stream(
         { idea, research, posts: [] },
-        { streamMode: "updates", signal: controller.signal },
+        { streamMode: "updates", signal: controller.signal, configurable: { threadId } },
       );
 
       for await (const chunk of stream) {

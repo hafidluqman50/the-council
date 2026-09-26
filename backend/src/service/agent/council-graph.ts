@@ -3,6 +3,7 @@ import { isAIMessage, type BaseMessage } from "@langchain/core/messages";
 import { END, START, StateGraph } from "@langchain/langgraph";
 
 import { logger } from "../../logger/logger";
+import { broadcastToThread } from "../realtime/thread-stream";
 import { composeUserContent } from "./agents/shared";
 import { createTurnLogger } from "./turn-logger";
 import { createOrchestratorOpenAgent, createOrchestratorVerdictAgent } from "./agents/orchestrator";
@@ -121,7 +122,21 @@ const invokeAgent = async <T>(
   }
 };
 
-const orchestratorOpen = async (state: CouncilState, config: { signal?: AbortSignal }) => {
+type NodeConfig = { signal?: AbortSignal; configurable?: { threadId?: string } };
+
+/** No token-level content streaming yet (deferred — parsing partial JSON tool-call args
+ * safely needs real testing time this doesn't have). This is the minimum viable progress
+ * signal: tells the client which agent is working and since when, so a long turn (eg the
+ * Tech Validator doing several web_search/calculate calls) shows a live elapsed timer
+ * instead of a static, indistinguishable-from-hung "..." forever. */
+const announceTurn = (config: NodeConfig, agentKey: string, round: number) => {
+  const threadId = config.configurable?.threadId;
+  if (!threadId) return;
+  broadcastToThread(threadId, { type: "turn-start", agentKey, round, startedAt: Date.now() });
+};
+
+const orchestratorOpen = async (state: CouncilState, config: NodeConfig) => {
+  announceTurn(config, "orc", 1);
   const agent = createOrchestratorOpenAgent(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
   const turn = await invokeAgent<{ body: string }>(agent, content, "orchestratorOpen", config.signal);
@@ -141,8 +156,9 @@ const analystOpen = async (
   agentKey: AgentKey,
   createAgentFn: (postsSoFar: DebatePost[]) => ReturnType<typeof createAlphaOpeningAgent>,
   state: CouncilState,
-  config: { signal?: AbortSignal },
+  config: NodeConfig,
 ) => {
+  announceTurn(config, agentKey, 1);
   const agent = createAgentFn(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
   const turn = await invokeAgent<{ body: string; references: PostReference[]; confidence?: number }>(
@@ -164,11 +180,11 @@ const analystOpen = async (
   return { posts: [post] };
 };
 
-const analystAlpha = (state: CouncilState, config: { signal?: AbortSignal }) =>
+const analystAlpha = (state: CouncilState, config: NodeConfig) =>
   analystOpen("m1", createAlphaOpeningAgent, state, config);
-const analystBeta = (state: CouncilState, config: { signal?: AbortSignal }) =>
+const analystBeta = (state: CouncilState, config: NodeConfig) =>
   analystOpen("m2", createBetaOpeningAgent, state, config);
-const analystGamma = (state: CouncilState, config: { signal?: AbortSignal }) =>
+const analystGamma = (state: CouncilState, config: NodeConfig) =>
   analystOpen("m3", createGammaOpeningAgent, state, config);
 
 type RebuttalAgentFactory = (
@@ -181,8 +197,9 @@ const runRebuttalTurn = async (
   createAgentFn: RebuttalAgentFactory,
   state: CouncilState,
   priorRebuttalsThisRound: DebatePost[],
-  signal: AbortSignal | undefined,
+  config: NodeConfig,
 ) => {
+  announceTurn(config, agentKey, 1);
   const targets = MARKET_PANEL_KEYS.filter((key) => key !== agentKey) as [AgentKey, ...AgentKey[]];
   const postsSoFar = [...state.posts, ...priorRebuttalsThisRound];
 
@@ -194,7 +211,7 @@ const runRebuttalTurn = async (
     confidence?: number;
     quoteOfAgentKey: AgentKey;
     quoteText: string;
-  }>(agent, content, `runRebuttalTurn:${agentKey}`, signal);
+  }>(agent, content, `runRebuttalTurn:${agentKey}`, config.signal);
 
   const post: DebatePost = {
     agentKey,
@@ -210,22 +227,23 @@ const runRebuttalTurn = async (
   return post;
 };
 
-const analystRebuttal = async (state: CouncilState, config: { signal?: AbortSignal }) => {
+const analystRebuttal = async (state: CouncilState, config: NodeConfig) => {
   const newPosts: DebatePost[] = [];
 
-  const alphaPost = await runRebuttalTurn("m1", createAlphaRebuttalAgent, state, newPosts, config.signal);
+  const alphaPost = await runRebuttalTurn("m1", createAlphaRebuttalAgent, state, newPosts, config);
   newPosts.push(alphaPost);
 
-  const betaPost = await runRebuttalTurn("m2", createBetaRebuttalAgent, state, newPosts, config.signal);
+  const betaPost = await runRebuttalTurn("m2", createBetaRebuttalAgent, state, newPosts, config);
   newPosts.push(betaPost);
 
-  const gammaPost = await runRebuttalTurn("m3", createGammaRebuttalAgent, state, newPosts, config.signal);
+  const gammaPost = await runRebuttalTurn("m3", createGammaRebuttalAgent, state, newPosts, config);
   newPosts.push(gammaPost);
 
   return { posts: newPosts };
 };
 
-const techValidatorAttack = async (state: CouncilState, config: { signal?: AbortSignal }) => {
+const techValidatorAttack = async (state: CouncilState, config: NodeConfig) => {
+  announceTurn(config, "tech", 1);
   const agent = createTechAttackAgent(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
   const turn = await invokeAgent<{ body: string; references: PostReference[]; confidence?: number }>(
@@ -247,7 +265,8 @@ const techValidatorAttack = async (state: CouncilState, config: { signal?: Abort
   return { posts: [post] };
 };
 
-const orchestratorVerdict = async (state: CouncilState, config: { signal?: AbortSignal }) => {
+const orchestratorVerdict = async (state: CouncilState, config: NodeConfig) => {
+  announceTurn(config, "orc", 2);
   const agent = createOrchestratorVerdictAgent(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
   const turn = await invokeAgent(agent, content, "orchestratorVerdict", config.signal);

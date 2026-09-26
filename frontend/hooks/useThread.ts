@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { getThread, mapUsage, WS_BASE_URL, type ThreadDetail, type ThreadPost, type Verdict } from "@/http/threads";
+import {
+  getThread,
+  mapUsage,
+  WS_BASE_URL,
+  type AgentKey,
+  type ThreadDetail,
+  type ThreadPost,
+  type Verdict,
+} from "@/http/threads";
 
 export const threadQueryKey = (publicRef: string) => ["thread", publicRef] as const;
 
@@ -9,7 +17,8 @@ type StreamMessage =
   | { type: "replay"; thread: unknown }
   | { type: "post"; post: Record<string, unknown> }
   | { type: "verdict"; verdict: Record<string, unknown> }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "turn-start"; agentKey: string; round: number; startedAt: number };
 
 const toUsage = (raw: Record<string, unknown>) =>
   mapUsage({
@@ -67,22 +76,39 @@ export function useThreadQuery(publicRef: string, initialData?: ThreadDetail) {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data as string) as StreamMessage;
 
+      if (message.type === "turn-start") {
+        queryClient.setQueryData(queryKey, (current: ThreadDetail | null | undefined) =>
+          current
+            ? {
+                ...current,
+                activeTurn: {
+                  agentKey: message.agentKey as AgentKey,
+                  round: message.round,
+                  startedAt: message.startedAt,
+                },
+              }
+            : current,
+        );
+      }
+
       if (message.type === "post") {
         queryClient.setQueryData(queryKey, (current: ThreadDetail | null | undefined) =>
-          current ? { ...current, posts: [...current.posts, toPost(message.post)] } : current,
+          current
+            ? { ...current, posts: [...current.posts, toPost(message.post)], activeTurn: null }
+            : current,
         );
       }
 
       if (message.type === "verdict") {
         const verdict = toVerdict(message.verdict);
         queryClient.setQueryData(queryKey, (current: ThreadDetail | null | undefined) =>
-          current ? { ...current, verdict, status: "resolved" as const } : current,
+          current ? { ...current, verdict, status: "resolved" as const, activeTurn: null } : current,
         );
       }
 
       if (message.type === "error") {
         queryClient.setQueryData(queryKey, (current: ThreadDetail | null | undefined) =>
-          current ? { ...current, status: "failed" as const, debateError: message.message } : current,
+          current ? { ...current, status: "failed" as const, debateError: message.message, activeTurn: null } : current,
         );
       }
     };

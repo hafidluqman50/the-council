@@ -9,7 +9,8 @@ export const registerRealtimeServer = (instance: Server<unknown>): void => {
 export type ThreadStreamEvent =
   | { type: "post"; post: Record<string, unknown> }
   | { type: "verdict"; verdict: Record<string, unknown> }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "turn-start"; agentKey: string; round: number; startedAt: number };
 
 export const broadcastToThread = (threadId: string, event: ThreadStreamEvent): void => {
   server?.publish(threadId, JSON.stringify(event));

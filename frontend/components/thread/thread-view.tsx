@@ -1,9 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+import { getAgentRosterEntry } from "@/components/agent/agent-roster";
+import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { useThreadQuery } from "@/hooks/useThread";
 import { usePaymentRequirementsQuery } from "@/hooks/usePaymentRequirements";
 import { relativeTimeFrom } from "@/lib/relative-time";
-import type { PaymentRequirements, ThreadDetail } from "@/http/threads";
+import type { AgentKey, PaymentRequirements, ThreadDetail } from "@/http/threads";
 import { PostCard } from "./post-card";
 import { VerdictCard } from "./verdict-card";
 
@@ -13,6 +17,33 @@ const ARTICLE_BADGE: Record<ThreadDetail["status"], { label: string; bg: string;
   revise: { label: "NEEDS REVISION", bg: "#f5f5f5", fg: "#6b7280" },
   failed: { label: "FAILED", bg: "#fee2e2", fg: "#b91c1c" },
 };
+
+function ActiveTurnIndicator({ agentKey, startedAt }: { agentKey: AgentKey; startedAt: number }) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+
+  const agent = getAgentRosterEntry(agentKey);
+
+  return (
+    <div className="flex items-center gap-[11px] rounded-xl px-6 py-4" style={{ border: "1px dashed #e5e7eb" }}>
+      <AgentAvatar agentKey={agentKey} size={28} />
+      <span className="text-sm" style={{ color: "#6b7280" }}>
+        {agent.name} is thinking · {elapsedSeconds}s
+      </span>
+      <span className="flex gap-1">
+        <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: "#6b7280", animation: "bob 1.1s ease-in-out infinite" }} />
+        <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: "#6b7280", animation: "bob 1.1s ease-in-out .18s infinite" }} />
+        <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: "#6b7280", animation: "bob 1.1s ease-in-out .36s infinite" }} />
+      </span>
+    </div>
+  );
+}
 
 export function ThreadView({
   initialThread,
@@ -108,7 +139,11 @@ export function ThreadView({
           <PostCard key={post.id} post={post} />
         ))}
 
-        {isWaitingForMore && (
+        {isWaitingForMore && thread.activeTurn && (
+          <ActiveTurnIndicator agentKey={thread.activeTurn.agentKey} startedAt={thread.activeTurn.startedAt} />
+        )}
+
+        {isWaitingForMore && !thread.activeTurn && (
           <div className="flex items-center gap-[11px] rounded-xl px-6 py-4" style={{ border: "1px dashed #e5e7eb" }}>
             <span
               className="flex h-7 w-7 flex-none items-center justify-center rounded-full font-mono text-[11px]"

@@ -73,6 +73,9 @@ export type ThreadDetail = {
   /** Set client-side from a WebSocket "error" event when the debate run itself fails —
    * never present in the raw API response. */
   debateError?: string | null;
+  /** Set client-side from a WebSocket "turn-start" event; cleared once the matching post
+   * (or a verdict/error) arrives — never present in the raw API response. */
+  activeTurn?: { agentKey: AgentKey; round: number; startedAt: number } | null;
 };
 
 export type PaymentAuthorization = {
