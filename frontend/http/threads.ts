@@ -76,6 +76,9 @@ export type ThreadDetail = {
   /** Set client-side from a WebSocket "turn-start" event; cleared once the matching post
    * (or a verdict/error) arrives — never present in the raw API response. */
   activeTurn?: { agentKey: AgentKey; round: number; startedAt: number } | null;
+  /** Set client-side from WebSocket "post-delta" events — the live-typing draft of the
+   * turn in progress; cleared on the next "turn-start", "post", "verdict", or "error". */
+  draft?: { agentKey: AgentKey; round: number; text: string } | null;
 };
 
 export type PaymentAuthorization = {

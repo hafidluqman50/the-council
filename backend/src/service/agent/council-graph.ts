@@ -1,10 +1,11 @@
 import type { Callbacks } from "@langchain/core/callbacks/manager";
 import { isAIMessage, type BaseMessage } from "@langchain/core/messages";
-import { END, START, StateGraph } from "@langchain/langgraph";
+import { END, START, StateGraph, type StreamMode } from "@langchain/langgraph";
 
 import { logger } from "../../logger/logger";
 import { broadcastToThread } from "../realtime/thread-stream";
 import { composeUserContent } from "./agents/shared";
+import { createBodyFieldScanner } from "./streaming-json-scanner";
 import { createTurnLogger } from "./turn-logger";
 import { createOrchestratorOpenAgent, createOrchestratorVerdictAgent } from "./agents/orchestrator";
 import { createAlphaOpeningAgent, createAlphaRebuttalAgent } from "./agents/market-analyst-alpha";
@@ -48,17 +49,82 @@ const sanitizeReferences = (references: PostReference[], searchUrls: Set<string>
     reference.url && searchUrls.has(reference.url) ? reference : { label: reference.label },
   );
 
+type NodeConfig = { signal?: AbortSignal; configurable?: { threadId?: string } };
+type StreamTarget = { agentKey: string; round: number };
+
+type StreamableAgent<T> = {
+  invoke: (
+    input: { messages: { role: string; content: string }[] },
+    config?: { recursionLimit?: number; callbacks?: Callbacks; signal?: AbortSignal },
+  ) => Promise<{ structuredResponse: T; messages: BaseMessage[] }>;
+  /** Method shorthand (not an arrow-typed property) so a concrete `ReactAgent`'s much more
+   * specific, generically-typed `.stream()` is checked bivariantly against this loose shape
+   * instead of tripping strict contravariant parameter checking over its internal
+   * `StreamMode` literal union. */
+  stream?(
+    input: { messages: { role: string; content: string }[] },
+    config?: { recursionLimit?: number; callbacks?: Callbacks; signal?: AbortSignal; streamMode?: StreamMode[] },
+  ): Promise<AsyncIterable<unknown>>;
+};
+
+/** Live text: `body` is streamed to the client character-by-character as the model
+ * generates it, read straight off the raw tool-call-argument JSON fragments DeepSeek's
+ * OpenAI-compatible API emits even under a forced tool_choice — no second LLM call, no
+ * change to what's ultimately hashed/recorded (that's still the final parsed value).
+ * `streamMode: ["values"]` piggybacks the same run to recover the exact same final state
+ * `.invoke()` would have returned, so a broken stream just falls back to a plain invoke
+ * rather than corrupting the authoritative result. */
+const streamAndBroadcast = async <T>(
+  agent: Required<Pick<StreamableAgent<T>, "stream">>,
+  content: string,
+  recursionLimit: number,
+  callbacks: Callbacks,
+  signal: AbortSignal | undefined,
+  threadId: string,
+  target: StreamTarget,
+): Promise<{ structuredResponse: T; messages: BaseMessage[] }> => {
+  const feed = createBodyFieldScanner();
+  let draft = "";
+  let finalState: { structuredResponse: T; messages: BaseMessage[] } | undefined;
+
+  const stream = await agent.stream(
+    { messages: [{ role: "human", content }] },
+    { recursionLimit, callbacks, signal, streamMode: ["messages", "values"] },
+  );
+
+  for await (const item of stream as AsyncIterable<[string, unknown]>) {
+    const [mode, payload] = item;
+
+    if (mode === "messages") {
+      const [messageChunk] = payload as [{ tool_call_chunks?: { args?: string }[] } | undefined, unknown];
+      for (const chunk of messageChunk?.tool_call_chunks ?? []) {
+        if (!chunk.args) continue;
+        const delta = feed(chunk.args);
+        if (!delta) continue;
+        draft += delta;
+        broadcastToThread(threadId, { type: "post-delta", agentKey: target.agentKey, round: target.round, text: draft });
+      }
+    }
+
+    if (mode === "values") {
+      finalState = payload as { structuredResponse: T; messages: BaseMessage[] };
+    }
+  }
+
+  if (!finalState) throw new Error("Streaming turn ended without a final state");
+  return finalState;
+};
+
 const invokeAgent = async <T>(
-  agent: {
-    invoke: (
-      input: { messages: { role: string; content: string }[] },
-      config?: { recursionLimit?: number; callbacks?: Callbacks; signal?: AbortSignal },
-    ) => Promise<{ structuredResponse: T; messages: BaseMessage[] }>;
-  },
+  agent: StreamableAgent<T>,
   content: string,
   node: string,
-  signal?: AbortSignal,
+  config: NodeConfig,
+  streamTarget?: StreamTarget,
 ): Promise<TurnResult<T>> => {
+  const signal = config.signal;
+  const threadId = config.configurable?.threadId;
+
   // Each agent's internal tool-calling loop defaults to LangGraph's recursionLimit of 25.
   // Observed live runs show agents legitimately making many calculate/quote_exact_post calls
   // in a single turn while fact-checking their own arguments before submitting — not a bug,
@@ -73,10 +139,34 @@ const invokeAgent = async <T>(
 
     const turnLogger = createTurnLogger(node);
     try {
-      const result = await agent.invoke(
-        { messages: [{ role: "human", content: attemptContent }] },
-        { recursionLimit, callbacks: turnLogger.callbacks, signal },
-      );
+      let result: { structuredResponse: T; messages: BaseMessage[] } | undefined;
+
+      if (streamTarget && threadId && agent.stream) {
+        try {
+          result = await streamAndBroadcast(
+            agent as Required<Pick<StreamableAgent<T>, "stream">>,
+            attemptContent,
+            recursionLimit,
+            turnLogger.callbacks,
+            signal,
+            threadId,
+            streamTarget,
+          );
+        } catch (streamError) {
+          logger.warn("streaming turn failed, falling back to non-streaming invoke", {
+            node,
+            error: streamError instanceof Error ? streamError.message : String(streamError),
+          });
+        }
+      }
+
+      if (!result) {
+        result = await agent.invoke(
+          { messages: [{ role: "human", content: attemptContent }] },
+          { recursionLimit, callbacks: turnLogger.callbacks, signal },
+        );
+      }
+
       const durationMs = turnLogger.logDone();
 
       // The model occasionally ends its turn with a plain message instead of ever calling
@@ -122,13 +212,8 @@ const invokeAgent = async <T>(
   }
 };
 
-type NodeConfig = { signal?: AbortSignal; configurable?: { threadId?: string } };
-
-/** No token-level content streaming yet (deferred — parsing partial JSON tool-call args
- * safely needs real testing time this doesn't have). This is the minimum viable progress
- * signal: tells the client which agent is working and since when, so a long turn (eg the
- * Tech Validator doing several web_search/calculate calls) shows a live elapsed timer
- * instead of a static, indistinguishable-from-hung "..." forever. */
+/** Broadcast before the agent is invoked so the client knows which agent is working and
+ * since when — the timer fallback for turns where streamed text never starts arriving. */
 const announceTurn = (config: NodeConfig, agentKey: string, round: number) => {
   const threadId = config.configurable?.threadId;
   if (!threadId) return;
@@ -139,7 +224,10 @@ const orchestratorOpen = async (state: CouncilState, config: NodeConfig) => {
   announceTurn(config, "orc", 1);
   const agent = createOrchestratorOpenAgent(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
-  const turn = await invokeAgent<{ body: string }>(agent, content, "orchestratorOpen", config.signal);
+  const turn = await invokeAgent<{ body: string }>(agent, content, "orchestratorOpen", config, {
+    agentKey: "orc",
+    round: 1,
+  });
 
   const post: DebatePost = {
     agentKey: "orc",
@@ -165,7 +253,8 @@ const analystOpen = async (
     agent,
     content,
     `analystOpen:${agentKey}`,
-    config.signal,
+    config,
+    { agentKey, round: 1 },
   );
 
   const post: DebatePost = {
@@ -211,7 +300,7 @@ const runRebuttalTurn = async (
     confidence?: number;
     quoteOfAgentKey: AgentKey;
     quoteText: string;
-  }>(agent, content, `runRebuttalTurn:${agentKey}`, config.signal);
+  }>(agent, content, `runRebuttalTurn:${agentKey}`, config, { agentKey, round: 1 });
 
   const post: DebatePost = {
     agentKey,
@@ -250,7 +339,8 @@ const techValidatorAttack = async (state: CouncilState, config: NodeConfig) => {
     agent,
     content,
     "techValidatorAttack",
-    config.signal,
+    config,
+    { agentKey: "tech", round: 1 },
   );
 
   const post: DebatePost = {
@@ -269,7 +359,7 @@ const orchestratorVerdict = async (state: CouncilState, config: NodeConfig) => {
   announceTurn(config, "orc", 2);
   const agent = createOrchestratorVerdictAgent(state.posts);
   const content = composeUserContent({ idea: state.idea, research: state.research, postsSoFar: state.posts });
-  const turn = await invokeAgent(agent, content, "orchestratorVerdict", config.signal);
+  const turn = await invokeAgent(agent, content, "orchestratorVerdict", config);
   const verdict = { ...turn.response, durationMs: turn.durationMs, usage: turn.usage ?? undefined };
   return { verdict };
 };

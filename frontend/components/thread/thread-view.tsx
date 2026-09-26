@@ -18,7 +18,15 @@ const ARTICLE_BADGE: Record<ThreadDetail["status"], { label: string; bg: string;
   failed: { label: "FAILED", bg: "#fee2e2", fg: "#b91c1c" },
 };
 
-function ActiveTurnIndicator({ agentKey, startedAt }: { agentKey: AgentKey; startedAt: number }) {
+function ActiveTurnIndicator({
+  agentKey,
+  startedAt,
+  draftText,
+}: {
+  agentKey: AgentKey;
+  startedAt: number;
+  draftText?: string;
+}) {
   const [elapsedSeconds, setElapsedSeconds] = useState(() => Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
 
   useEffect(() => {
@@ -29,6 +37,27 @@ function ActiveTurnIndicator({ agentKey, startedAt }: { agentKey: AgentKey; star
   }, [startedAt]);
 
   const agent = getAgentRosterEntry(agentKey);
+
+  if (draftText) {
+    return (
+      <div className="rounded-xl p-6" style={{ border: "1px solid #e5e7eb", backgroundColor: "#ffffff" }}>
+        <div className="mb-3 flex items-center gap-2.5">
+          <AgentAvatar agentKey={agentKey} size={36} />
+          <span className="text-base font-semibold text-ink">{agent.name}</span>
+          <span className="font-mono text-xs" style={{ color: "#898989" }}>
+            writing · {elapsedSeconds}s
+          </span>
+        </div>
+        <p className="m-0 whitespace-pre-wrap text-base leading-[1.55]" style={{ color: "#374151" }}>
+          {draftText}
+          <span
+            className="ml-0.5 inline-block h-[16px] w-[2px] align-middle"
+            style={{ backgroundColor: agent.color, animation: "bob 0.9s ease-in-out infinite" }}
+          />
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-[11px] rounded-xl px-6 py-4" style={{ border: "1px dashed #e5e7eb" }}>
@@ -140,7 +169,15 @@ export function ThreadView({
         ))}
 
         {isWaitingForMore && thread.activeTurn && (
-          <ActiveTurnIndicator agentKey={thread.activeTurn.agentKey} startedAt={thread.activeTurn.startedAt} />
+          <ActiveTurnIndicator
+            agentKey={thread.activeTurn.agentKey}
+            startedAt={thread.activeTurn.startedAt}
+            draftText={
+              thread.draft?.agentKey === thread.activeTurn.agentKey && thread.draft?.round === thread.activeTurn.round
+                ? thread.draft.text
+                : undefined
+            }
+          />
         )}
 
         {isWaitingForMore && !thread.activeTurn && (
