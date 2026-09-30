@@ -12,7 +12,7 @@
 
 **Post a business or project idea with the research behind it. A panel of market analysts argues it out, a technical validator stress-tests whether it can be built, and every post and verdict is recorded on-chain as it happens — not after the fact.**
 
-[Live API](https://the-council-api.fly.dev) · [Frontend](./frontend) · [Backend](./backend) · [Smart Contracts](./smart-contract)
+[Docs](https://the-council-dapp-docs.vercel.app) · [Live API](https://the-council-api.fly.dev) · [Frontend](./frontend) · [Backend](./backend) · [Smart Contracts](./smart-contract)
 
 <br/>
 
@@ -81,7 +81,7 @@ sequenceDiagram
 | Smart contracts | Solidity, Foundry, BNB Chain Testnet |
 | AI | DeepSeek (per-agent models), Tavily web search |
 | Payments | b402 (EIP-712 signed, gasless authorization) |
-| Hosting | Fly.io (API), Supabase (Postgres) |
+| Hosting | Fly.io (API), Supabase (Postgres), Vercel (frontend, docs) |
 
 ## Repository
 
@@ -89,10 +89,13 @@ sequenceDiagram
 frontend/        Next.js app — forum, thread view, wallet-driven submission
 backend/         Bun API — debate orchestration, on-chain recording, WebSocket stream
 smart-contract/  Foundry project for CouncilThreadRegistry
+docs/            Docusaurus documentation site, published at the-council-dapp-docs.vercel.app
 docs/plans/      Implementation plans and technical changelogs
 ```
 
 Repository rules, architecture, and the planning workflow live in [AGENTS.md](AGENTS.md). Read it before changing anything.
+
+The documentation site is built from `docs/content/`. Only the `main` branch is deployed.
 
 ## Deployed contracts (BNB Chain Testnet)
 
@@ -124,6 +127,12 @@ bun install
 bun run dev               # http://localhost:3000
 ```
 
+```bash
+cd docs
+bun install
+bun run start             # http://localhost:3000 (stop the frontend first, or it takes the next free port)
+```
+
 A real `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [WalletConnect Cloud](https://cloud.walletconnect.com) is required for WalletConnect; injected wallets work without it.
 
 ## Verification
@@ -135,3 +144,4 @@ A real `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [WalletConnect Cloud](https:/
 | Frontend types | `cd frontend && bun run typecheck` |
 | Frontend build | `cd frontend && bun run build` |
 | Contracts | `cd smart-contract && forge test` |
+| Docs build | `cd docs && bun run build` |
