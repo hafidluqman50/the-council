@@ -16,12 +16,12 @@ export function ThreadCard({ thread }: { thread: ThreadSummary }) {
   return (
     <Link
       href={`/forum/${thread.id}`}
-      className="flex flex-col gap-3.5 rounded-xl bg-canvas p-6 text-left transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-      style={{ border: "1px solid #e5e7eb" }}
+      className="shadow-brutal shadow-brutal-hover flex flex-col gap-3.5 rounded-xl bg-canvas p-6 text-left"
+      style={{ border: "1px solid var(--line)" }}
     >
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={thread.status} />
-        <span className="font-mono text-xs" style={{ color: "#898989" }}>
+        <span className="font-mono text-xs" style={{ color: "var(--faint)" }}>
           #{thread.id} · {truncateAddress(thread.authorAddress)} · {relativeTimeFrom(thread.openedAt)}
         </span>
       </div>
@@ -43,7 +43,7 @@ export function ThreadCard({ thread }: { thread: ThreadSummary }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 border-t border-[#f3f4f6] pt-3.5 font-mono text-xs text-muted">
+      <div className="flex flex-wrap items-center gap-4 border-t border-hairline-soft pt-3.5 font-mono text-xs text-muted">
         <span>{thread.replyCount} replies</span>
         <span>{thread.sourceCount} sources cited</span>
         <span className="flex items-center gap-[5px]">

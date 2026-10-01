@@ -30,9 +30,9 @@ export function FilterChips({
             onClick={() => onChange(filter.value)}
             className="rounded-lg px-3.5 py-2 text-sm font-medium transition-colors"
             style={{
-              backgroundColor: isActive ? "#ffffff" : "transparent",
-              boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
-              color: isActive ? "#111111" : "#6b7280",
+              backgroundColor: isActive ? "var(--pill-on)" : "transparent",
+              boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
+              color: isActive ? "var(--ink)" : "var(--muted)",
             }}
           >
             {filter.label}

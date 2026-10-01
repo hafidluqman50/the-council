@@ -32,12 +32,12 @@ export function MarkdownBody({
           ol: ({ children: kids }) => <ol className="ml-5 list-decimal space-y-1">{kids}</ol>,
           li: ({ children: kids }) => <li>{kids}</li>,
           blockquote: ({ children: kids }) => (
-            <blockquote className="border-l-2 py-0.5 pl-3.5 text-[14px] leading-[1.5]" style={{ borderColor: "#e5e7eb", color: "#6b7280" }}>
+            <blockquote className="border-l-2 py-0.5 pl-3.5 text-[14px] leading-[1.5]" style={{ borderColor: "var(--line)", color: "var(--muted)" }}>
               {kids}
             </blockquote>
           ),
           code: ({ children: kids }) => (
-            <code className="rounded px-1.5 py-0.5 font-mono text-[13px]" style={{ backgroundColor: "#f5f5f5", color: "#111111" }}>
+            <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-[13px] text-ink">
               {kids}
             </code>
           ),

@@ -4,13 +4,13 @@ import type { PaymentRequirements, Risk, Verdict } from "@/http/threads";
 const SEVERITY_META: Record<Risk["severity"], { color: string; width: number }> = {
   high: { color: "#dc2626", width: 90 },
   medium: { color: "#F3BA2F", width: 55 },
-  low: { color: "#6b7280", width: 25 },
+  low: { color: "var(--muted)", width: 25 },
 };
 
 function verdictTier(score: number): { bg: string; color: string } {
-  if (score >= 70) return { bg: "#d1fae5", color: "#065f46" };
+  if (score >= 70) return { bg: "var(--badge-mint-bg)", color: "var(--badge-mint-fg)" };
   if (score >= 40) return { bg: "#F3BA2F", color: "#111111" };
-  return { bg: "#f5f5f5", color: "#6b7280" };
+  return { bg: "var(--card)", color: "var(--muted)" };
 }
 
 export function VerdictCard({
@@ -30,28 +30,28 @@ export function VerdictCard({
 
   return (
     <section
-      className="mt-2 grid gap-8 rounded-xl p-8"
-      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", backgroundColor: "#f5f5f5" }}
+      className="mt-2 grid gap-8 rounded-xl bg-surface p-8"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}
     >
       <div className="flex items-center gap-[22px]">
         <div
           className="relative h-[120px] w-[120px] flex-none rounded-full"
-          style={{ background: `conic-gradient(#F3BA2F ${dialDegrees}deg, #e5e7eb ${dialDegrees}deg)` }}
+          style={{ background: `conic-gradient(#F3BA2F ${dialDegrees}deg, var(--line) ${dialDegrees}deg)` }}
         >
           <div
-            className="absolute flex flex-col items-center justify-center rounded-full"
-            style={{ inset: 11, backgroundColor: "#f5f5f5" }}
+            className="absolute flex flex-col items-center justify-center rounded-full bg-surface"
+            style={{ inset: 11 }}
           >
             <span className="font-display text-[34px] font-semibold leading-none text-ink" style={{ letterSpacing: "-0.03em" }}>
               {verdict.score}
             </span>
-            <span className="mt-1 font-mono text-[11px]" style={{ color: "#6b7280" }}>
+            <span className="mt-1 font-mono text-[11px]" style={{ color: "var(--muted)" }}>
               of 100
             </span>
           </div>
         </div>
         <div className="min-w-0">
-          <div className="mb-2 text-[13px] font-medium" style={{ color: "#6b7280" }}>
+          <div className="mb-2 text-[13px] font-medium" style={{ color: "var(--muted)" }}>
             Consensus score
           </div>
           <div
@@ -60,7 +60,7 @@ export function VerdictCard({
           >
             {verdict.statusText}
           </div>
-          <p className="m-0 mt-3 max-w-[320px] text-[15px] leading-[1.55]" style={{ color: "#374151" }}>
+          <p className="m-0 mt-3 max-w-[320px] text-[15px] leading-[1.55]" style={{ color: "var(--text)" }}>
             {verdict.conclusion}
           </p>
         </div>
@@ -73,53 +73,53 @@ export function VerdictCard({
             return (
               <div key={index}>
                 <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                  <span className="text-sm" style={{ color: "#374151" }}>
+                  <span className="text-sm" style={{ color: "var(--text)" }}>
                     {risk.label}
                   </span>
                   <span className="font-mono text-sm uppercase text-ink">{risk.severity}</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "#e5e7eb" }}>
+                <div className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: "var(--line)" }}>
                   <div className="h-full rounded-full" style={{ width: `${meta.width}%`, backgroundColor: meta.color }} />
                 </div>
               </div>
             );
           })
         ) : (
-          <p className="text-sm" style={{ color: "#6b7280" }}>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
             No named risks.
           </p>
         )}
       </div>
 
       <div className="flex flex-col justify-center gap-3.5">
-        <div className="flex flex-col gap-2 font-mono text-xs" style={{ color: "#6b7280" }}>
+        <div className="flex flex-col gap-2 font-mono text-xs" style={{ color: "var(--muted)" }}>
           <div className="flex justify-between gap-3">
             <span>standard</span>
-            <span style={{ color: "#111111" }}>ERC-8004</span>
+            <span className="text-ink">ERC-8004</span>
           </div>
           <div className="flex justify-between gap-3">
             <span>payment rail</span>
-            <span style={{ color: "#111111" }}>
+            <span className="text-ink">
               b402 · {formatAtomicAmount(payment.priceAtomic)} {payment.enabled ? "USDT" : "(disabled)"}
             </span>
           </div>
           {totalTokens > 0 && (
             <div className="flex justify-between gap-3">
               <span>total tokens</span>
-              <span style={{ color: "#111111" }}>{totalTokens.toLocaleString()}</span>
+              <span className="text-ink">{totalTokens.toLocaleString()}</span>
             </div>
           )}
           {verdict.durationMs !== null && (
             <div className="flex justify-between gap-3">
               <span>verdict turn</span>
-              <span style={{ color: "#111111" }}>{formatDuration(verdict.durationMs)}</span>
+              <span className="text-ink">{formatDuration(verdict.durationMs)}</span>
             </div>
           )}
         </div>
 
         <div
           className="flex items-center justify-center gap-2 rounded-lg py-2.5 text-center text-[13px] leading-[1.5]"
-          style={{ backgroundColor: "#d1fae5", color: "#065f46" }}
+          style={{ backgroundColor: "var(--badge-mint-bg)", color: "var(--badge-mint-fg)" }}
         >
           <span aria-hidden>✓</span>
           <span>
@@ -128,7 +128,7 @@ export function VerdictCard({
                 href={`${BSC_TESTNET_EXPLORER_TX_URL}${verdict.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: "#065f46" }}
+                style={{ color: "var(--badge-mint-fg)" }}
               >
                 Verdict recorded on-chain · {truncateHash(verdict.txHash)} ↗
               </a>

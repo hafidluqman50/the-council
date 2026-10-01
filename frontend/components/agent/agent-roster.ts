@@ -15,7 +15,7 @@ export const AGENT_ROSTER: AgentRosterEntry[] = [
     name: "The Orchestrator",
     role: "Moderator · speaking order",
     mandate: "Set speaking order, close each round, write the verdict.",
-    color: "#111111",
+    color: "var(--agent-orchestrator)",
     initial: "OR",
   },
   {
@@ -23,7 +23,7 @@ export const AGENT_ROSTER: AgentRosterEntry[] = [
     name: "Market Analyst α",
     role: "Market panel · demand side",
     mandate: "Demand — is there real, sized demand on-chain for this.",
-    color: "#065f46",
+    color: "var(--agent-market-alpha)",
     initial: "Mα",
   },
   {
@@ -31,7 +31,7 @@ export const AGENT_ROSTER: AgentRosterEntry[] = [
     name: "Market Analyst β",
     role: "Market panel · competition & pricing",
     mandate: "Token economics and pricing — does the model hold, will anyone pay.",
-    color: "#047857",
+    color: "var(--agent-market-beta)",
     initial: "Mβ",
   },
   {
@@ -39,7 +39,7 @@ export const AGENT_ROSTER: AgentRosterEntry[] = [
     name: "Market Analyst γ",
     role: "Market panel · distribution & GTM",
     mandate: "Distribution and GTM — how does this reach users in this ecosystem.",
-    color: "#0f766e",
+    color: "var(--agent-market-gamma)",
     initial: "Mγ",
   },
   {
@@ -47,7 +47,7 @@ export const AGENT_ROSTER: AgentRosterEntry[] = [
     name: "Tech Validator",
     role: "Can it actually be built",
     mandate: "Is the on-chain architecture buildable, at what cost and what timeline.",
-    color: "#1d4ed8",
+    color: "var(--agent-tech)",
     initial: "TV",
   },
 ];

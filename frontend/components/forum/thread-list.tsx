@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { FilterChips, type ForumFilter } from "@/components/forum/filter-chips";
 import { ThreadCard } from "@/components/forum/thread-card";
+import { TowersScene } from "@/components/scene/towers-scene";
 import { useThreadsQuery } from "@/hooks/useThreads";
 import type { ThreadSummary } from "@/http/threads";
 
@@ -29,7 +30,9 @@ export function ThreadList({ initialThreads }: { initialThreads: ThreadSummary[]
         <FilterChips active={filter} onChange={setFilter} />
       </div>
 
-      <div className="flex flex-col gap-4">
+      {threads && threads.length > 0 && <TowersScene threads={threads} activeFilter={filter} />}
+
+      <div className="flex flex-col gap-[18px]">
         {isLoading &&
           [0, 1, 2].map((index) => <div key={index} className="h-32 animate-pulse rounded-xl bg-surface" />)}
 

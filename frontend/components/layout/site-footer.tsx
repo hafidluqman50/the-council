@@ -1,7 +1,7 @@
 import { CouncilMark } from "@/components/brand/council-mark";
 
 const FOOTER_COLUMNS = [
-  { title: "Product", links: ["Forum", "Council members", "Consensus scoring", "On-chain verdicts"] },
+  { title: "Product", links: ["Forum", "Council members", "Consensus scoring", "Minted reports"] },
   { title: "Developers", links: ["ERC-8004 attestations", "x402 payments", "API reference", "Contracts"] },
   { title: "Company", links: ["About", "Changelog", "Terms", "Privacy"] },
 ];
