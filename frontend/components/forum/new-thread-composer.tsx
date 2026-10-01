@@ -62,21 +62,21 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
     <div
       onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-[18px]"
-      style={{ backgroundColor: "rgba(17,17,17,0.45)" }}
+      style={{ backgroundColor: "rgba(17,17,17,0.45)", animation: "overlay-in 140ms ease-out" }}
     >
       <section
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         className="flex w-full max-w-[560px] flex-col rounded-2xl bg-canvas"
-        style={{ maxHeight: "calc(100vh - 36px)", boxShadow: "0 20px 60px rgba(0,0,0,0.22)" }}
+        style={{ maxHeight: "calc(100vh - 36px)", boxShadow: "0 20px 60px rgba(0,0,0,0.22)", animation: "dialog-in 160ms cubic-bezier(.16,1,.3,1)" }}
       >
         <div className="flex flex-none items-start justify-between gap-3.5 p-8 pb-0">
           <div>
             <div className="font-display text-2xl font-semibold text-ink" style={{ letterSpacing: "-0.03em" }}>
               New thread
             </div>
-            <div className="mt-1.5 text-[15px]" style={{ color: "#6b7280" }}>
+            <div className="mt-1.5 text-[15px]" style={{ color: "var(--muted)" }}>
               The council debates your idea against the research you bring.
             </div>
           </div>
@@ -85,7 +85,7 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
             onClick={onClose}
             aria-label="Close"
             className="flex h-9 w-9 flex-none items-center justify-center rounded-full"
-            style={{ border: "1px solid #e5e7eb", color: "#6b7280" }}
+            style={{ border: "1px solid var(--line)", color: "var(--muted)" }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18" />
@@ -103,15 +103,15 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
               rows={3}
               disabled={createThreadMutation.isPending}
               placeholder="Describe the Web3 or business idea you want the council to evaluate..."
-              className="w-full resize-y rounded-lg p-[10px_14px] text-base leading-[1.5] text-ink outline-none disabled:opacity-60"
-              style={{ border: "1px solid #e5e7eb" }}
+              className="w-full resize-y rounded-lg bg-canvas p-[10px_14px] text-base leading-[1.5] text-ink outline-none disabled:opacity-60"
+              style={{ border: "1px solid var(--line)" }}
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-ink">
               Your own research{" "}
-              <span className="font-normal" style={{ color: "#6b7280" }}>
+              <span className="font-normal" style={{ color: "var(--muted)" }}>
                 — data, sources, or assumptions you want validated
               </span>
             </label>
@@ -121,16 +121,16 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
               rows={4}
               disabled={createThreadMutation.isPending}
               placeholder="e.g. 62% of BSC DEX users are retail with tickets under $500 (DefiLlama, Sep 2026). My assumption: they will pay a 0.5% fee for automated vesting."
-              className="w-full resize-y rounded-lg p-[10px_14px] text-base leading-[1.5] text-ink outline-none disabled:opacity-60"
-              style={{ border: "1px solid #e5e7eb" }}
+              className="w-full resize-y rounded-lg bg-canvas p-[10px_14px] text-base leading-[1.5] text-ink outline-none disabled:opacity-60"
+              style={{ border: "1px solid var(--line)" }}
             />
           </div>
 
-          <div className="rounded-lg p-4" style={{ backgroundColor: "#f5f5f5" }}>
-            <div className="mb-1.5 font-mono text-[11px]" style={{ color: "#6b7280" }}>
+          <div className="rounded-lg bg-surface p-4">
+            <div className="mb-1.5 font-mono text-[11px]" style={{ color: "var(--muted)" }}>
               THREAD TITLE · AUTO-SUMMARIZED
             </div>
-            <div className="text-[15px] leading-[1.45]" style={{ color: idea.trim() ? "#111111" : "#898989" }}>
+            <div className="text-[15px] leading-[1.45]" style={{ color: idea.trim() ? "var(--ink)" : "var(--faint)" }}>
               {titlePreview}
             </div>
           </div>
@@ -147,9 +147,9 @@ export function NewThreadComposer({ open, onClose }: { open: boolean; onClose: (
 
         <div
           className="flex flex-none flex-wrap items-center justify-between gap-3 p-8 pt-5"
-          style={{ borderTop: "1px solid #f3f4f6" }}
+          style={{ borderTop: "1px solid var(--line2)" }}
         >
-          <span className="font-mono text-xs" style={{ color: "#6b7280" }}>
+          <span className="font-mono text-xs" style={{ color: "var(--muted)" }}>
             {priceLabel}
           </span>
           <Button onClick={handleSubmit} disabled={!canSubmit} className="h-10 px-[22px]">

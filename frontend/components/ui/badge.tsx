@@ -9,8 +9,8 @@ const STATUS_LABEL: Record<ThreadStatus, string> = {
 
 const STATUS_STYLE: Record<ThreadStatus, { bg: string; fg: string }> = {
   live: { bg: "#F3BA2F", fg: "#111111" },
-  resolved: { bg: "#d1fae5", fg: "#065f46" },
-  revise: { bg: "#f5f5f5", fg: "#6b7280" },
+  resolved: { bg: "var(--badge-mint-bg)", fg: "var(--badge-mint-fg)" },
+  revise: { bg: "var(--card)", fg: "var(--muted)" },
   failed: { bg: "#fee2e2", fg: "#b91c1c" },
 };
 

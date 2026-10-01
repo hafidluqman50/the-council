@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Outfit } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
+import { themeInitScript } from "@/lib/theme";
 import { Web3Provider } from "@/components/providers/web3-provider";
 import "./globals.css";
 
@@ -19,8 +20,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
+      </head>
       <body className="min-h-full flex flex-col bg-canvas">
         <Web3Provider>
           <div className="flex flex-1 flex-col">{children}</div>

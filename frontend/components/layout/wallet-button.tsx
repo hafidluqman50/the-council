@@ -17,7 +17,10 @@ export function WalletButton() {
             aria-hidden={!ready}
           >
             <span>{connected ? (chain.unsupported ? "Wrong network" : account.displayName) : "Connect wallet"}</span>
-            <span className="rounded-md bg-white/[0.14] px-[9px] py-[5px] font-mono text-xs font-normal">
+            <span
+              className="hidden rounded-md px-[9px] py-[5px] font-mono text-xs font-normal min-[640px]:block"
+              style={{ backgroundColor: "var(--cta-chip)" }}
+            >
               {connected ? account.displayBalance ?? "" : "BSC"}
             </span>
           </button>

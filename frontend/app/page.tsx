@@ -5,8 +5,10 @@ import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { HomeCta } from "@/components/layout/home-cta";
 import { SiteNav } from "@/components/layout/site-nav";
 import { NewThreadTrigger } from "@/components/forum/new-thread-trigger";
+import { CouncilScene } from "@/components/scene/council-scene";
 import { buttonClasses } from "@/components/ui/button";
-import { getThread, listThreads, type AgentKey } from "@/http/threads";
+import { derivePostTag } from "@/lib/post-tag";
+import { getThread, listThreads } from "@/http/threads";
 
 export const dynamic = "force-dynamic";
 
@@ -14,29 +16,14 @@ const STATS = [
   { value: "$4.2M", label: "TVL in validated projects" },
   { value: "8,410", label: "active users" },
   { value: "1,284", label: "ideas debated" },
-  { value: "412", label: "verdicts recorded on-chain" },
+  { value: "412", label: "reports minted on-chain" },
 ];
 
 const STEPS = [
-  { n: "01", color: "#111111", title: "Post your idea", body: "Describe the idea and attach the research you already did. Threads without evidence get scored on evidence." },
-  { n: "02", color: "#047857", title: "The panel argues", body: "Three market analysts debate demand, pricing, and distribution among themselves until they reach one position." },
-  { n: "03", color: "#1d4ed8", title: "Tech gets the last word", body: "The validator tests whether it can actually be built, then the council records a consensus score on-chain." },
+  { n: "01", stair: "", color: "var(--agent-orchestrator)", title: "Post your idea", body: "Describe the idea and attach the research you already did. Threads without evidence get scored on evidence." },
+  { n: "02", stair: "stair-2", color: "var(--agent-market-beta)", title: "The panel argues", body: "Three market analysts debate demand, pricing, and distribution among themselves until they reach one position." },
+  { n: "03", stair: "stair-3", color: "var(--agent-tech)", title: "Tech gets the last word", body: "The validator tests whether it can actually be built, then the council publishes a consensus score you can mint." },
 ];
-
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/\*(.+?)\*/g, "$1")
-    .replace(/`(.+?)`/g, "$1")
-    .replace(/^>\s?/gm, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function truncate(text: string, max: number): string {
-  const trimmed = stripMarkdown(text);
-  return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max).trimEnd()}…`;
-}
 
 async function getHeroPreview() {
   const threads = await listThreads();
@@ -46,14 +33,14 @@ async function getHeroPreview() {
   const detail = await getThread(latest.id);
   if (!detail) return null;
 
-  const previewPosts = detail.posts.filter((post) => post.agentKey !== "orc").slice(0, 2);
-
   return {
     id: latest.id,
-    status: latest.status,
-    title: latest.title,
     score: latest.score,
-    posts: previewPosts.map((post) => ({ agentKey: post.agentKey, line: truncate(post.body, 110) })),
+    posts: detail.posts.slice(0, 10).map((post) => ({
+      agentKey: post.agentKey,
+      tag: derivePostTag(post),
+      body: post.body,
+    })),
   };
 }
 
@@ -64,8 +51,11 @@ export default async function Home() {
     <>
       <SiteNav />
       <main className="mx-auto w-full max-w-[1200px] px-6 py-6">
-        <section className="flex flex-col gap-24 py-14 pb-6">
-          <div className="grid items-center gap-12" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+        <section className="flex flex-col gap-24 py-8 pb-6">
+          <div
+            className="grid items-center gap-6"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))" }}
+          >
             <div className="flex flex-col items-start gap-6">
               <span
                 className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium"
@@ -84,7 +74,8 @@ export default async function Home() {
               <p className="m-0 max-w-[52ch] text-base leading-[1.5] text-slate">
                 Post a business or project idea with the research behind it. A panel of market
                 analysts argues it out among themselves, a technical validator stress-tests whether
-                it can be built, and the whole exchange is recorded on-chain post by post.
+                it can be built, and the whole exchange is published as a thread you can mint
+                on-chain.
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -95,41 +86,19 @@ export default async function Home() {
               </div>
             </div>
 
-            <div
-              className="flex flex-col gap-3.5 rounded-2xl bg-canvas p-[22px]"
-              style={{ border: "1px solid #e5e7eb", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
-            >
-              {hero ? (
-                <>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-mono text-xs text-muted">thread {hero.id}</span>
-                    <span
-                      className="rounded-full px-2.5 py-[3px] font-mono text-[11px]"
-                      style={{ backgroundColor: "#F3BA2F", color: "#111111" }}
-                    >
-                      {hero.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-base font-semibold leading-[1.4] text-ink">{hero.title}</div>
-                  {hero.posts.map((post, index) => (
-                    <HeroPreviewLine key={index} agentKey={post.agentKey} line={post.line} />
-                  ))}
-                  <div className="flex items-center justify-between gap-3 border-t border-[#f3f4f6] pt-3">
-                    <span className="font-mono text-xs text-muted">consensus</span>
-                    <span className="font-mono text-xl font-medium text-ink">{hero.score ?? "··"}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="py-10 text-center text-sm text-muted">
-                  No debates yet — be the first to submit an idea.
-                </div>
-              )}
-            </div>
+            {hero ? (
+              <CouncilScene threadRef={`#${hero.id}`} score={hero.score} posts={hero.posts} />
+            ) : (
+              <CouncilScene threadRef="#0000" score={null} posts={[]} />
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4" data-stats>
+          <div className="grid grid-cols-2 gap-6 min-[760px]:grid-cols-4" data-stats>
             {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-1.5 rounded-xl bg-surface px-6 py-7">
+              <div
+                key={stat.label}
+                className="shadow-brutal shadow-brutal-hover flex flex-col gap-1.5 rounded-xl bg-surface px-6 py-7"
+              >
                 <span
                   className="font-display text-[30px] font-semibold leading-none text-ink"
                   style={{ letterSpacing: "-0.03em" }}
@@ -148,9 +117,12 @@ export default async function Home() {
             >
               How a thread runs
             </h2>
-            <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
+            <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))" }}>
               {STEPS.map((step) => (
-                <div key={step.n} className="flex flex-col gap-2.5 rounded-xl bg-surface p-8">
+                <div
+                  key={step.n}
+                  className={`shadow-brutal shadow-brutal-hover flex flex-col gap-2.5 rounded-xl bg-surface p-8 ${step.stair}`}
+                >
                   <span className="font-mono text-[13px]" style={{ color: step.color }}>
                     {step.n}
                   </span>
@@ -168,12 +140,12 @@ export default async function Home() {
             >
               Who sits on the council
             </h2>
-            <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
+            <div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))" }}>
               {AGENT_ROSTER.map((agent) => (
                 <div
                   key={agent.key}
-                  className="flex items-center gap-3 rounded-xl bg-canvas p-6"
-                  style={{ border: "1px solid #e5e7eb" }}
+                  className="shadow-brutal shadow-brutal-hover flex items-center gap-3 rounded-xl bg-canvas p-6"
+                  style={{ border: "1px solid var(--line)" }}
                 >
                   <AgentAvatar agentKey={agent.key} size={36} />
                   <div className="min-w-0">
@@ -189,22 +161,5 @@ export default async function Home() {
         </section>
       </main>
     </>
-  );
-}
-
-function HeroPreviewLine({ agentKey, line }: { agentKey: AgentKey; line: string }) {
-  const AGENT_ROSTER_MAP = Object.fromEntries(AGENT_ROSTER.map((agent) => [agent.key, agent]));
-  const agent = AGENT_ROSTER_MAP[agentKey];
-
-  return (
-    <div className="flex gap-[11px] rounded-lg bg-surface p-[13px]">
-      <AgentAvatar agentKey={agentKey} size={28} />
-      <div className="min-w-0">
-        <div className="mb-[3px] text-[13px] font-semibold" style={{ color: agent.color }}>
-          {agent.name}
-        </div>
-        <div className="text-[13.5px] leading-[1.5] text-slate">{line}</div>
-      </div>
-    </div>
   );
 }

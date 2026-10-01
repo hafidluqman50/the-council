@@ -24,36 +24,39 @@ export function AppShell({ threadCount, children }: { threadCount: number; child
         <aside className="flex min-w-0 flex-col gap-3 min-[900px]:sticky min-[900px]:top-[88px]">
           <NewThreadTrigger label="New thread" className="w-full" />
 
-          <div className="overflow-hidden rounded-xl" style={{ border: "1px solid #e5e7eb" }}>
+          <div className="overflow-hidden rounded-xl" style={{ border: "1px solid var(--line)" }}>
             <Link
               href="/forum"
               className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
-              style={{ backgroundColor: isIndex ? "#f5f5f5" : "#ffffff" }}
+              style={{ backgroundColor: isIndex ? "var(--card)" : "var(--bg)" }}
             >
-              <span className="flex-1 text-sm font-medium" style={{ color: isIndex ? "#111111" : "#374151" }}>
+              <span className="flex-1 text-sm font-medium" style={{ color: isIndex ? "var(--ink)" : "var(--text)" }}>
                 All threads
               </span>
-              <span className="font-mono text-xs" style={{ color: "#6b7280" }}>
+              <span className="font-mono text-xs" style={{ color: "var(--muted)" }}>
                 {isConnected ? `${threadCount} total` : "locked"}
               </span>
             </Link>
             {!isConnected && (
               <div
                 className="flex flex-col items-center gap-3 px-[18px] py-[26px] text-center"
-                style={{ borderTop: "1px solid #f3f4f6" }}
+                style={{ borderTop: "1px solid var(--line2)" }}
               >
-                <span style={{ color: "#e5e7eb" }}>
+                <span style={{ color: "var(--line)" }}>
                   <CouncilMark size={40} />
                 </span>
-                <span className="text-sm leading-[1.5]" style={{ color: "#6b7280" }}>
+                <span className="text-sm leading-[1.5]" style={{ color: "var(--muted)" }}>
                   Connect your wallet to load your thread history from the on-chain index.
                 </span>
               </div>
             )}
           </div>
 
-          <div className="rounded-xl p-4" style={{ border: "1px solid #e5e7eb" }}>
-            <div className="mb-3 text-[13px] font-medium" style={{ color: "#6b7280" }}>
+          <div
+            className="hidden rounded-xl p-4 min-[900px]:block"
+            style={{ border: "1px solid var(--line)" }}
+          >
+            <div className="mb-3 text-[13px] font-medium" style={{ color: "var(--muted)" }}>
               Council members
             </div>
             <div className="flex flex-col gap-[11px]">
@@ -64,7 +67,7 @@ export function AppShell({ threadCount, children }: { threadCount: number; child
                     <div className="text-[13.5px] font-semibold" style={{ color: agent.color }}>
                       {agent.name}
                     </div>
-                    <div className="text-[12.5px]" style={{ color: "#6b7280" }}>
+                    <div className="text-[12.5px]" style={{ color: "var(--muted)" }}>
                       {agent.role}
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { CouncilMark } from "@/components/brand/council-mark";
 import { NewThreadTrigger } from "@/components/forum/new-thread-trigger";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { WalletButton } from "@/components/layout/wallet-button";
 
 export function SiteNav() {
@@ -13,14 +14,15 @@ export function SiteNav() {
   const isForum = pathname?.startsWith("/forum") ?? false;
 
   const pillStyle = (active: boolean) => ({
-    backgroundColor: active ? "#ffffff" : "transparent",
-    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
-    color: active ? "#111111" : "#6b7280",
+    backgroundColor: active ? "var(--pill-on)" : "transparent",
+    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
+    color: active ? "var(--ink)" : "var(--muted)",
   });
 
   return (
     <header
-      className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-4 border-b border-[#f3f4f6] bg-canvas px-6 py-2.5"
+      className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-4 border-b border-hairline-soft px-6 py-2.5 backdrop-blur-xl"
+      style={{ backgroundColor: "var(--header-bg)" }}
     >
       <div className="flex items-center gap-2.5">
         <Link href="/" className="flex items-center text-ink">
@@ -39,7 +41,10 @@ export function SiteNav() {
         </nav>
       </div>
       <div className="flex items-center gap-2.5">
-        <NewThreadTrigger label="Submit an idea" variant="secondary" />
+        <ThemeToggle />
+        <div className="hidden min-[640px]:block">
+          <NewThreadTrigger label="Submit an idea" variant="secondary" />
+        </div>
         <WalletButton />
       </div>
     </header>
