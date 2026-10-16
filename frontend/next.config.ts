@@ -24,6 +24,7 @@ const X402_SPECIFIERS = [
 const stubPath = "./lib/stubs/x402-unsupported.ts";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["three"],
   turbopack: {
     root: __dirname,
     resolveAlias: Object.fromEntries(X402_SPECIFIERS.map((specifier) => [specifier, stubPath])),
