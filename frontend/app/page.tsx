@@ -5,19 +5,12 @@ import { AgentAvatar } from "@/components/agent/agent-avatar";
 import { HomeCta } from "@/components/layout/home-cta";
 import { SiteNav } from "@/components/layout/site-nav";
 import { NewThreadTrigger } from "@/components/forum/new-thread-trigger";
-import { CouncilScene } from "@/components/scene/council-scene";
+import { LazyRotundaScene } from "@/components/scene/lazy-scenes";
 import { buttonClasses } from "@/components/ui/button";
 import { derivePostTag } from "@/lib/post-tag";
 import { getThread, listThreads } from "@/http/threads";
 
 export const dynamic = "force-dynamic";
-
-const STATS = [
-  { value: "$4.2M", label: "TVL in validated projects" },
-  { value: "8,410", label: "active users" },
-  { value: "1,284", label: "ideas debated" },
-  { value: "412", label: "reports minted on-chain" },
-];
 
 const STEPS = [
   { n: "01", stair: "", color: "var(--agent-orchestrator)", title: "Post your idea", body: "Describe the idea and attach the research you already did. Threads without evidence get scored on evidence." },
@@ -38,6 +31,7 @@ async function getHeroPreview() {
     score: latest.score,
     posts: detail.posts.slice(0, 10).map((post) => ({
       agentKey: post.agentKey,
+      quoteOfAgentKey: post.quoteOfAgentKey,
       tag: derivePostTag(post),
       body: post.body,
     })),
@@ -86,28 +80,12 @@ export default async function Home() {
               </div>
             </div>
 
-            {hero ? (
-              <CouncilScene threadRef={`#${hero.id}`} score={hero.score} posts={hero.posts} />
-            ) : (
-              <CouncilScene threadRef="#0000" score={null} posts={[]} />
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 min-[760px]:grid-cols-4" data-stats>
-            {STATS.map((stat) => (
-              <div
-                key={stat.label}
-                className="shadow-brutal shadow-brutal-hover flex flex-col gap-1.5 rounded-xl bg-surface px-6 py-7"
-              >
-                <span
-                  className="font-display text-[30px] font-semibold leading-none text-ink"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  {stat.value}
-                </span>
-                <span className="text-sm text-muted">{stat.label}</span>
-              </div>
-            ))}
+            <LazyRotundaScene
+              posts={hero?.posts ?? []}
+              score={hero?.score ?? null}
+              threadRef={hero ? `#${hero.id}` : ""}
+              threadHref={hero ? `/forum/${hero.id}` : null}
+            />
           </div>
 
           <div className="flex flex-col gap-6">

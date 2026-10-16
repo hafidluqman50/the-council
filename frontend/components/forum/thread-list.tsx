@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { FilterChips, type ForumFilter } from "@/components/forum/filter-chips";
 import { ThreadCard } from "@/components/forum/thread-card";
-import { TowersScene } from "@/components/scene/towers-scene";
+import { LazyArchipelagoScene } from "@/components/scene/lazy-scenes";
 import { useThreadsQuery } from "@/hooks/useThreads";
 import type { ThreadSummary } from "@/http/threads";
 
@@ -30,7 +30,7 @@ export function ThreadList({ initialThreads }: { initialThreads: ThreadSummary[]
         <FilterChips active={filter} onChange={setFilter} />
       </div>
 
-      {threads && threads.length > 0 && <TowersScene threads={threads} activeFilter={filter} />}
+      {threads && threads.length > 0 && <LazyArchipelagoScene threads={threads} filter={filter} />}
 
       <div className="flex flex-col gap-[18px]">
         {isLoading &&

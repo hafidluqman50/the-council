@@ -8,6 +8,7 @@ import { useThreadQuery } from "@/hooks/useThread";
 import { usePaymentRequirementsQuery } from "@/hooks/usePaymentRequirements";
 import { relativeTimeFrom } from "@/lib/relative-time";
 import type { AgentKey, PaymentRequirements, ThreadDetail } from "@/http/threads";
+import { LazyAssemblyHallScene } from "@/components/scene/lazy-scenes";
 import { PostCard } from "./post-card";
 import { VerdictCard } from "./verdict-card";
 
@@ -149,6 +150,8 @@ export function ThreadView({
           </div>
         )}
       </article>
+
+      <LazyAssemblyHallScene thread={thread} />
 
       <div className="flex flex-wrap items-center justify-between gap-3.5 px-1">
         <div className="flex items-center gap-2.5">
